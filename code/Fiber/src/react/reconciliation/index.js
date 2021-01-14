@@ -1,8 +1,18 @@
 import { createTaskQueue, arrfield, createStateNode, getTag } from "../Misc"
-
+// 任务队列
 const taskQueue = createTaskQueue()
-
+// 要执行的子任务
 const subTask = null
+
+const pendingCommit = null
+
+const commitAllWork = fiber => {
+  fiber.effects.forEach(item => {
+    if (item.effectTag === "placement") {
+      item.parent.stateNode.appendChild(item.stateNode)
+    }
+  })
+}
 
 const getFirstTask = () => {
   // 从任务队列中获取任务
@@ -78,6 +88,8 @@ const executeTask = fiber => {
     // 如果同级不存在，退回到当前节点的父级
     currentExecutelyFiber = currentExecutelyFiber.parent
   }
+
+  pendingCommit = currentExecutelyFiber
 }
 
 const workLoop = deadline => {
@@ -89,6 +101,10 @@ const workLoop = deadline => {
   // executeTask 方法执行任务 (接收任务) => 返回新的任务
   while (subTask && deadline.timeRemaining() > 1) {
     subTask = executeTask(subTask)
+  }
+
+  if (pendingCommit) {
+    commitAllWork(pendingCommit)
   }
 }
 
