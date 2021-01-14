@@ -1,4 +1,4 @@
-import { createTaskQueue, arrfield } from "../Misc"
+import { createTaskQueue, arrfield, createStateNode } from "../Misc"
 
 const taskQueue = createTaskQueue()
 
@@ -37,13 +37,16 @@ const reconcileChildren = (fiber, children) => {
       tag: "host_component",
       effects: [],
       effectTag: "placement",
-      stateNode: null,
       parent: fiber
     }
 
+    newFiber.stateNode = createStateNode(newFiber)
+
+    // 为父级 fiber 添加子级 fiber
     if (index == 0) {
       fiber.child = newFiber
     } else {
+      // 为 fiber 添加下一个兄弟 fiber
       prevFiber.sibling = newFiber
     }
 
