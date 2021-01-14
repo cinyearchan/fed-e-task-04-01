@@ -57,10 +57,15 @@ const reconcileChildren = (fiber, children) => {
 }
 
 const executeTask = fiber => {
+  // 构建子级 fiber 对象
   reconcileChildren(fiber, fiber.props.children)
+  if (fiber.child) {
+    return fiber.child
+  }
 }
 
 const workLoop = deadline => {
+  // 如果子任务不存在，就去获取子任务
   if (!subTask) {
     subTask = getFirstTask()
   }
