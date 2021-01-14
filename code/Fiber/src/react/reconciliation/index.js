@@ -1,4 +1,4 @@
-import { createTaskQueue } from "../Misc"
+import { createTaskQueue, arrfield } from "../Misc"
 
 const taskQueue = createTaskQueue()
 
@@ -18,7 +18,44 @@ const getFirstTask = () => {
   }
 }
 
-const executeTask = fiber => {}
+const reconcileChildren = (fiber, children) => {
+  // children 可能是对象，也可能是数组
+  // 将 children 转换成数组
+  const arrfieldChildren = arrfield(children)
+
+  let index = 0
+  let numberOfElements = arrfieldChildren.length
+  let element = null
+  let newFiber = null
+  let prevFiber = null
+
+  while (index < numberOfElements) {
+    element = arrfieldChildren[index]
+    newFiber = {
+      type: element.type,
+      props: element.props,
+      tag: "host_component",
+      effects: [],
+      effectTag: "placement",
+      stateNode: null,
+      parent: fiber
+    }
+
+    if (index == 0) {
+      fiber.child = newFiber
+    } else {
+      prevFiber.sibling = newFiber
+    }
+
+    prevFiber = newFiber
+
+    index++
+  }
+}
+
+const executeTask = fiber => {
+  reconcileChildren(fiber, fiber.props.children)
+}
 
 const workLoop = deadline => {
   if (!subTask) {
