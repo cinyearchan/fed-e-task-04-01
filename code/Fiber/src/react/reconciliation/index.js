@@ -1,3 +1,4 @@
+import { updateNodeElement } from "../DOM"
 import { createTaskQueue, arrfield, createStateNode, getTag } from "../Misc"
 // 任务队列
 const taskQueue = createTaskQueue()
@@ -8,7 +9,16 @@ const pendingCommit = null
 
 const commitAllWork = fiber => {
   fiber.effects.forEach(item => {
-    if (item.effectTag === "placement") {
+    if (item.effectTag === "update") {
+      // 更新
+      if (item.type === item.alternate.type) {
+        // 节点类型相同
+        updateNodeElement(item.stateNode, item, item.alternate)
+      } else {
+        // 节点类型不同
+        item.parent.stateNode.replaceChild(item.stateNode, item.alternate.stateNode)
+      }
+    } else if (item.effectTag === "placement") {
       let fiber = item
       let parentFiber = item.parent
       // 类组件节点、函数组件节点 的 stateNode 不能保存真实的 dom 节点，一直向上寻找类组件的父级
@@ -20,19 +30,23 @@ const commitAllWork = fiber => {
       }
     }
   })
+  // 备份旧的 fiber 节点对象
+  // 根节点 fiber 对象的 真实 dom 中保存 根节点 fiber 对象
+  fiber.stateNode.__rootFiberContainer = fiber
 }
 
 const getFirstTask = () => {
   // 从任务队列中获取任务
   const task = taskQueue.pop()
 
-  // 返回最外层节点的 fiber 对象
+  // 返回最外层节点的 fiber 对象 —— 根节点 fiber 对象
   return {
     props: task.props,
     stateNode: task.dom,
     tag: "host_root",
     effects: [],
-    child: null
+    child: null,
+    aoternate: task.dom.__rootFiberContainer
   }
 }
 
@@ -46,26 +60,64 @@ const reconcileChildren = (fiber, children) => {
   let element = null
   let newFiber = null
   let prevFiber = null
+  let alternate = null
+
+  if (fiber.alternate && fiber.alternate.child) {
+    alternate = fiber.alternate.child
+  }
 
   while (index < numberOfElements) {
+    // 子级 virtualDOM 对象
     element = arrfieldChildren[index]
-    newFiber = {
-      type: element.type,
-      props: element.props,
-      tag: getTag(element),
-      effects: [],
-      effectTag: "placement",
-      parent: fiber
+
+    if (element && alternate) {
+      // 更新操作
+      // 子级 fiber 对象
+      newFiber = {
+        type: element.type,
+        props: element.props,
+        tag: getTag(element),
+        effects: [],
+        effectTag: "update",
+        parent: fiber,
+        alternate
+      }
+
+      if (element.type === alternate.type) {
+        // 类型相同
+        newFiber.stateNode = alternate.stateNode
+      } else {
+        // 类型不同
+        // 为 fiber 节点添加 DOM 对象或组件实例对象
+        newFiber.stateNode = createStateNode(newFiber)
+      }      
+    } else if (element && !alternate) {
+      // 初始渲染
+      // 子级 fiber 对象
+      newFiber = {
+        type: element.type,
+        props: element.props,
+        tag: getTag(element),
+        effects: [],
+        effectTag: "placement",
+        parent: fiber
+      }
+      // 为 fiber 节点添加 DOM 对象或组件实例对象
+      newFiber.stateNode = createStateNode(newFiber)
     }
-
-    newFiber.stateNode = createStateNode(newFiber)
-
+    
     // 为父级 fiber 添加子级 fiber
     if (index == 0) {
       fiber.child = newFiber
     } else {
       // 为 fiber 添加下一个兄弟 fiber
       prevFiber.sibling = newFiber
+    }
+
+    if (alternate && alternate.sibling) {
+      alternate = alternate.sibling
+    } else {
+      alternate = null
     }
 
     prevFiber = newFiber
