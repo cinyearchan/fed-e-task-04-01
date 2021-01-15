@@ -6,6 +6,24 @@ export default function updateNodeElement(
   // 获取节点对应的属性对象
   const newProps = virtualDOM.props || {}
   const oldProps = oldVirtualDOM.props || {}
+
+  if (virtualDOM.type === "text") {
+    if (newProps.textContent !== oldProps.textContent) {
+      // 父级节点类型需要判断是否相同
+      if (virtualDOM.parent.type !== oldVirtualDOM.parent.type) {
+        virtualDOM.parent.stateNode.appendChild(
+          document.createTextNode(newProps.textContent)
+        )
+      } else {
+        virtualDOM.parent.stateNode.replaceChild(
+          document.createTextNode(newProps.textContent),
+          oldVirtualDOM.stateNode
+        )
+      }
+    }
+    return
+  }
+
   Object.keys(newProps).forEach(propName => {
     // 获取属性值
     const newPropsValue = newProps[propName]
