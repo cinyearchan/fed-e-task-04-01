@@ -9,7 +9,9 @@ const pendingCommit = null
 
 const commitAllWork = fiber => {
   fiber.effects.forEach(item => {
-    if (item.effectTag === "update") {
+    if (item.effectTag === "delete") {
+      item.parent.stateNode.removeChild(item.stateNode)
+    } else if (item.effectTag === "update") {
       // 更新
       if (item.type === item.alternate.type) {
         // 节点类型相同
@@ -66,11 +68,15 @@ const reconcileChildren = (fiber, children) => {
     alternate = fiber.alternate.child
   }
 
-  while (index < numberOfElements) {
+  while (index < numberOfElements || alternate) {
     // 子级 virtualDOM 对象
     element = arrfieldChildren[index]
 
-    if (element && alternate) {
+    if (!element && alternate) {
+      // 删除操作
+      alternate.effectTag = "delete"
+      fiber.effects.push(alternate)
+    } else if (element && alternate) {
       // 更新操作
       // 子级 fiber 对象
       newFiber = {
@@ -92,7 +98,7 @@ const reconcileChildren = (fiber, children) => {
         newFiber.stateNode = createStateNode(newFiber)
       }      
     } else if (element && !alternate) {
-      // 初始渲染
+      // 初始渲染 —— 创建操作
       // 子级 fiber 对象
       newFiber = {
         type: element.type,
@@ -109,7 +115,7 @@ const reconcileChildren = (fiber, children) => {
     // 为父级 fiber 添加子级 fiber
     if (index == 0) {
       fiber.child = newFiber
-    } else {
+    } else if (element) {
       // 为 fiber 添加下一个兄弟 fiber
       prevFiber.sibling = newFiber
     }
