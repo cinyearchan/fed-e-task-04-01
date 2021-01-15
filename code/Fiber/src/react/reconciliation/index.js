@@ -9,7 +9,15 @@ const pendingCommit = null
 const commitAllWork = fiber => {
   fiber.effects.forEach(item => {
     if (item.effectTag === "placement") {
-      item.parent.stateNode.appendChild(item.stateNode)
+      let fiber = item
+      let parentFiber = item.parent
+      // 类组件不能 stateNode 不能保存真实的 dom 节点，一直向上寻找类组件的父级
+      while (parentFiber.tag === "class_component") {
+        parentFiber = parentFiber.parent
+      }
+      if (fiber.tag === "host_component") {
+        parentFiber.stateNode.appendChild(fiber.stateNode)
+      }
     }
   })
 }
@@ -68,7 +76,11 @@ const reconcileChildren = (fiber, children) => {
 
 const executeTask = fiber => {
   // 构建子级 fiber 对象
-  reconcileChildren(fiber, fiber.props.children)
+  if (fiber.tag === "class_component") {
+    reconcileChildren(fiber, fiber.stateNode.render())
+  } else {
+    reconcileChildren(fiber, fiber.props.children)
+  }
   // 如果子级存在，返回子级
   // 将这个子级当做父级，构建这个父级下的子级
   if (fiber.child) {
