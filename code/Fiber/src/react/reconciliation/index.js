@@ -3,9 +3,9 @@ import { createTaskQueue, arrfield, createStateNode, getTag } from "../Misc"
 // 任务队列
 const taskQueue = createTaskQueue()
 // 要执行的子任务
-const subTask = null
+let subTask = null
 
-const pendingCommit = null
+let pendingCommit = null
 
 const commitAllWork = fiber => {
   fiber.effects.forEach(item => {

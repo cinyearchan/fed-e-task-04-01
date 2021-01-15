@@ -14,16 +14,19 @@ const jsx = (
 class Greeting extends Component {
   constructor(props) {
     super(props)
+    this.state = {
+      name: "张三"
+    }
   }
   render() {
-    return <div>greeting</div>
+    return <div>{ this.props.title }greeting</div>
   }
 }
 
-// render(<Greeting/>, root)
+render(<Greeting title="hello" />, root)
 
 function FnComponent() {
   return <div>FnComponent</div>
 }
 
-render(<FnComponent/>, root)
+// render(<FnComponent/>, root)
