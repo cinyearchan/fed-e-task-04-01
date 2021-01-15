@@ -19,7 +19,12 @@ class Greeting extends Component {
     }
   }
   render() {
-    return <div>{ this.props.title }greeting</div>
+    return (
+      <div>
+        {this.props.title} greeting {this.state.name}
+        <button onClick={() => this.setState({name: "李四"})}>button</button>
+      </div>
+    )
   }
 }
 
