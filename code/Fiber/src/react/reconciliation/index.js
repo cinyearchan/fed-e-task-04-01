@@ -11,8 +11,8 @@ const commitAllWork = fiber => {
     if (item.effectTag === "placement") {
       let fiber = item
       let parentFiber = item.parent
-      // 类组件不能 stateNode 不能保存真实的 dom 节点，一直向上寻找类组件的父级
-      while (parentFiber.tag === "class_component") {
+      // 类组件节点、函数组件节点 的 stateNode 不能保存真实的 dom 节点，一直向上寻找类组件的父级
+      while (parentFiber.tag === "class_component" || parentFiber.tag === "function_component") {
         parentFiber = parentFiber.parent
       }
       if (fiber.tag === "host_component") {
@@ -77,7 +77,11 @@ const reconcileChildren = (fiber, children) => {
 const executeTask = fiber => {
   // 构建子级 fiber 对象
   if (fiber.tag === "class_component") {
+    // 构建类组件节点的子级
     reconcileChildren(fiber, fiber.stateNode.render())
+  } else if (fiber.tag === "function_component") {
+    // 构建函数组件节点的子级
+    reconcileChildren(fiber, fiber.stateNode(fiber.props))
   } else {
     reconcileChildren(fiber, fiber.props.children)
   }

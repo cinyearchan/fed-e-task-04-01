@@ -20,4 +20,10 @@ class Greeting extends Component {
   }
 }
 
-render(<Greeting/>, root)
+// render(<Greeting/>, root)
+
+function FnComponent() {
+  return <div>FnComponent</div>
+}
+
+render(<FnComponent/>, root)
